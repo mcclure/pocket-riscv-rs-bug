@@ -1,5 +1,5 @@
 # So you can build this without setting nightly as your default
-RUST_CHANNEL ?= +nightly
+RUST_CHANNEL ?=
 RUST_ARGS ?=
 
 .PHONY: main

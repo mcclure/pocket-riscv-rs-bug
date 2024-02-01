@@ -12,9 +12,9 @@ build-std-features = ["compiler-builtins-mem"]
 build-std = ["core", "compiler_builtins", "alloc"]
 
 [build]
-target = "riscv32imafdc-unknown-none-elf.json"
+target = "riscv32imac-unknown-none-elf"
 
 [env]
 # Ensure CC builds properly for platform
 CC_riscv32imafdc_unknown_none_elf = "riscv64-unknown-elf-gcc"
-CFLAGS_riscv32imafdc_unknown_none_elf = "-mabi=ilp32d -march=rv32imafdc"
+CFLAGS_riscv32imafdc_unknown_none_elf = "-mabi=ilp32d -march=rv32imac"
