@@ -10,7 +10,15 @@ speed-debug = []
 
 [build-dependencies]
 litex-pac = { path = "external/openfpga-litex/lang/rust/crates/litex-pac", features = ["rt"] }
+image = { version = "0.24.6", features = ["png"], default-features = false }
+rgb565 = "0.1.3"
+
 # slint-build = "1.2.2"
+
+# This refers to git main (0.8 prerelease) because 0.7 does not properly deduce the maximum atomic width.
+# The rkyv maintainer has volunteered to manually add riscv32imafdc support if it is ever needed.
+# If this version rev is changed here, it must also be changed in [dependencies] below.
+rkyv = { git = "https://github.com/rkyv/rkyv", rev = "e86ed9c746c280f43d2d5f0265c35f67adab1f2d" }
 
 [dependencies]
 embedded-alloc = "0.5.0"
@@ -24,4 +32,5 @@ riscv-rt = "0.11.0"
 num-traits = { version = "0.2.17", default-features = false }
 glam = { version = "0.24.2", default-features = false, features = ["libm", "fast-math"] }
 cfg-if = "1.0.0"
-rkyv = { version = "0.7.43", default-features = false, features = ["alloc", "size_32"] }
+rkyv = { git = "https://github.com/rkyv/rkyv", rev = "e86ed9c746c280f43d2d5f0265c35f67adab1f2d", default-features = false, features = ["alloc", "pointer_width_32"] } # , features = ["alloc", "size_32"]
+
