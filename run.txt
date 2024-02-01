@@ -2,7 +2,10 @@
 
 git submodule update --init --recursive # Remember to repeat every git pull
 
-rustup target add riscv32imac-unknown-none-elf
+rustup target add riscv32imafc-unknown-none-elf
+
+### First time? (These steps should *not* be required, but may be tried if `make` fails)
+
 rustup install nightly # May require suffix like -x86_64-unknown-linux-gnu
 rustup component add rust-src --toolchain nightly
 cargo +nightly install cargo-binutils
