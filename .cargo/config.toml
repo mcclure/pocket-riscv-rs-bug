@@ -1,4 +1,4 @@
-[target.riscv32imafdc-unknown-none-elf]
+[target.riscv32imac-unknown-none-elf]
 rustflags = [
   "-C", "link-arg=-Tregions.ld",
   "-C", "link-arg=-Tmemory.x",
@@ -16,5 +16,5 @@ target = "riscv32imac-unknown-none-elf"
 
 [env]
 # Ensure CC builds properly for platform
-CC_riscv32imafdc_unknown_none_elf = "riscv64-unknown-elf-gcc"
-CFLAGS_riscv32imafdc_unknown_none_elf = "-mabi=ilp32d -march=rv32imac"
+CC_riscv32imac_unknown_none_elf = "riscv64-unknown-elf-gcc"
+CFLAGS_riscv32imac_unknown_none_elf = "-mabi=ilp32d -march=rv32imac"
