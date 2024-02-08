@@ -14,6 +14,7 @@ use litex_openfpga::*;
 use riscv_rt::entry;
 
 mod irect2;
+mod rkyv_types;
 
 // Basic platform support
 
@@ -112,6 +113,7 @@ fn main() -> ! {
         use alloc::vec::Vec;
         use glam::IVec2;
         use crate::irect2::*;
+        use crate::rkyv_types::*;
 
         // Top-level config
 
@@ -166,12 +168,6 @@ fn main() -> ! {
 
         // Game state
 
-        struct RawImage {
-            w:u16, h:u16,
-            pixels: *const u16,
-            flippable: bool // If false, reversing face doesn't change sprite
-        }
-
         #[derive(PartialEq, Eq)]
         enum Lifetime {
             Live, Dying, Dead // Dying is a phase for deleting damage
@@ -193,13 +189,13 @@ fn main() -> ! {
         }
 
         // "Background" sprite
-        let playfield = RawImage { w:256, h:192, flippable:false, pixels: include_bytes!(concat!(env!("OUT_DIR"), "/playfield_bg.bin")) as *const u8 as _ };
+        let playfield = unsafe { rkyv::archived_root::<RawImage>(include_bytes!(concat!(env!("OUT_DIR"), "/playfield_bg.rkyv"))) };
         let playfield_size = IVec2::new(playfield.w as i32, playfield.h as i32);
         let playfield_basis = (display - playfield_size) / 2;
 
         // Character sprites
-        let witch = RawImage { w:30, h:30, flippable: true, pixels: include_bytes!(concat!(env!("OUT_DIR"), "/player_hit.bin")) as *const u8 as _ };
-        let blobber = RawImage { w:34, h:34, flippable: false, pixels: include_bytes!(concat!(env!("OUT_DIR"), "/blobber_attack.bin")) as *const u8 as _ };
+        let witch = unsafe { rkyv::archived_root::<RawImage>(include_bytes!(concat!(env!("OUT_DIR"), "/player_hit.rkyv"))) };
+        let blobber = unsafe { rkyv::archived_root::<RawImage>(include_bytes!(concat!(env!("OUT_DIR"), "/blobber_attack.rkyv"))) };
 
         // Shared data for sprites
         let sprite_data = [witch, blobber];
@@ -438,9 +434,7 @@ fn main() -> ! {
                         let at = IVec2::new(x, y) - playfield_basis; // This pixel, in internal coordinates of bg image
                         screen[y as usize * DISPLAY_WIDTH + x as usize] =
                             if (ivec2_within(playfield_size, at)) {
-                                unsafe {
-                                    *playfield.pixels.wrapping_add((at.y * playfield_size.x + at.x) as usize)
-                                }
+                                playfield.pixels[(at.y * playfield_size.x + at.x) as usize]
                             } else {
                                 #[cfg(feature = "speed-debug")]
                                 let background = if speed_debug_background != background && speed_debug_rect.within(IVec2::new(x as i32, y as i32)) { speed_debug_background } else { background };
@@ -469,13 +463,15 @@ fn main() -> ! {
                     let blinking = select_blink_active && idx == select_idx; // Is *this* sprite blink-off?
                     let dying = *live != Lifetime::Live; // Is this sprite hidden because it's dying?
                     if !(blinking || dying) { // Draw?
-                        let transparent = unsafe { *sprite.pixels }; // When we see the top left pixel, don't draw it.
+                        let transparent = sprite.pixels[0]; // When we see the top left pixel, don't draw it.
                         for y in 0..sprite.h {
                             for x in 0..sprite.w {
                                 let pix_at = *at + IVec2::new(x as i32, y as i32); // Current pixel within the coordinate system of the sprite.
                                 if (ivec2_within(display, pix_at)) { // Don't draw outside the screen!
                                     // WARNING: u16 MATH COULD OVERFLOW WITH LARGE SPRITES
-                                    let color = unsafe { *sprite.pixels.wrapping_add((y * sprite.w + if *reversed && sprite.flippable { sprite.w - x - 1 } else { x } ) as usize) };
+                                    let color = sprite.pixels[
+                                        (y * sprite.w + if *reversed && sprite.flippable { sprite.w - x - 1 } else { x } ) as usize
+                                    ];
                                     if (color != transparent) {
                                         screen[pix_at.y as usize * DISPLAY_WIDTH + pix_at.x as usize] = color;
                                     }
